@@ -54,6 +54,7 @@ GA_CAP_FACTOR              = float(os.getenv('GA_CAP_FACTOR', '0.65'))
 MEMORY_FILE = os.path.join(_CALMCLAW, 'MEMORY.md')
 REMINDERS_FILE = os.path.join(_CALMCLAW, 'REMINDERS.md')
 TASKS_FILE = os.path.join(_CALMCLAW, 'TASKS.md')
+NOTES_FILE = os.path.join(_CALMCLAW, 'NOTES.md')
 
 
 def load_memory():
@@ -155,6 +156,59 @@ def save_tasks(tasks):
         lines.append('')
     with open(TASKS_FILE, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
+
+
+def load_notes():
+    """Parse NOTES.md and return list of note dicts."""
+    if not os.path.exists(NOTES_FILE):
+        return []
+    with open(NOTES_FILE, 'r', encoding='utf-8') as f:
+        content = f.read()
+    notes = []
+    blocks = re.split(r'^## ', content, flags=re.MULTILINE)
+    for block in blocks:
+        if not block.strip():
+            continue
+        note = {}
+        lines = block.split('\n')
+        note['id'] = lines[0].strip()
+        body_lines = []
+        in_meta = True
+        for line in lines[1:]:
+            if in_meta and line.startswith('- ') and ': ' in line:
+                key, val = line[2:].split(': ', 1)
+                note[key.strip()] = val.strip()
+            elif in_meta and line.strip() == '':
+                in_meta = False
+            else:
+                in_meta = False
+                body_lines.append(line)
+        note['content'] = '\n'.join(body_lines).strip()
+        if note.get('id') and note.get('title'):
+            notes.append(note)
+    return notes
+
+
+def save_notes(notes):
+    """Write notes list back to NOTES.md."""
+    os.makedirs(_CALMCLAW, exist_ok=True)
+    lines = ['# Notes\n']
+    for n in notes:
+        lines.append(f"## {n['id']}")
+        lines.append(f"- title: {n['title']}")
+        lines.append(f"- created: {n['created']}")
+        lines.append(f"- updated: {n['updated']}")
+        lines.append('')
+        lines.append(n.get('content', ''))
+        lines.append('')
+    with open(NOTES_FILE, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+
+
+def _title_to_slug(title: str) -> str:
+    slug = title.lower()
+    slug = re.sub(r'[^a-z0-9]+', '-', slug)
+    return slug.strip('-')
 
 
 def _parse_due(due_str):
@@ -357,6 +411,22 @@ async def _run_task(app, task):
                         result = f"Error: {e}"
                 else:
                     result = "Error: no file_path provided"
+            elif tool_name == 'save_note':
+                title = tool_args.get('title', '')
+                content = tool_args.get('content', '')
+                if title:
+                    try:
+                        result = note_save(title, content)
+                    except Exception as e:
+                        result = f"Error: {e}"
+                else:
+                    result = "Error: no title provided"
+            elif tool_name == 'read_notes':
+                title = tool_args.get('title', None)
+                try:
+                    result = note_read(title)
+                except Exception as e:
+                    result = f"Error: {e}"
             else:
                 available = ', '.join(t['function']['name'] for t in TOOLS)
                 result = f"Error: unknown tool '{tool_name}'. Available: {available}"
@@ -465,6 +535,40 @@ def load_compression_prompt():
     with open(COMPRESSION_PROMPT_FILE, 'r', encoding='utf-8') as f:
         return f.read().strip()
 
+def note_save(title: str, content: str) -> str:
+    """Create or update a note by title."""
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    slug = _title_to_slug(title)
+    notes = load_notes()
+    for note in notes:
+        if note['id'] == slug:
+            note['title'] = title
+            note['content'] = content
+            note['updated'] = now
+            save_notes(notes)
+            return f"Note '{title}' updated."
+    notes.append({'id': slug, 'title': title, 'created': now, 'updated': now, 'content': content})
+    save_notes(notes)
+    return f"Note '{title}' saved."
+
+
+def note_read(title: str | None = None) -> str:
+    """Read one note by title, or all notes."""
+    notes = load_notes()
+    if not notes:
+        return "No notes saved yet."
+    if title:
+        slug = _title_to_slug(title)
+        for note in notes:
+            if note['id'] == slug:
+                return f"## {note['title']}\n\n{note['content']}"
+        return f"Note '{title}' not found."
+    parts = []
+    for note in notes:
+        parts.append(f"## {note['title']}\n\n{note['content']}")
+    return '\n\n---\n\n'.join(parts)
+
+
 def load_system_rules():
     """Load SOUL.md + SYSTEM_RULES.md from ~/.calmclaw/."""
     parts = []
@@ -535,6 +639,44 @@ TOOLS = [
                     }
                 },
                 'required': ['url'],
+            },
+        },
+    },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'save_note',
+            'description': 'Save or update a note. Creates a new note if the title is new, or overwrites the existing note with the same title.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'title': {
+                        'type': 'string',
+                        'description': 'Short title for the note, e.g. "Shopping list"',
+                    },
+                    'content': {
+                        'type': 'string',
+                        'description': 'Full content of the note',
+                    },
+                },
+                'required': ['title', 'content'],
+            },
+        },
+    },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'read_notes',
+            'description': 'Read one or all saved notes. If title is given, returns that note. If omitted, returns all notes.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'title': {
+                        'type': 'string',
+                        'description': 'Title of the note to read. Omit to read all notes.',
+                    },
+                },
+                'required': [],
             },
         },
     },
@@ -1704,6 +1846,35 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         result = await asyncio.get_event_loop().run_in_executor(None, web_search, query)
                     except Exception as e:
                         result = f"Error: {e}"
+
+            elif tool_name == 'save_note':
+                title = tool_args.get('title', '')
+                content = tool_args.get('content', '')
+                if not title:
+                    result = "Error: no title provided"
+                else:
+                    run_msg = f"[{_req_counter}.-] app: RUNNING: save_note({title})"
+                    logger.debug(run_msg)
+                    c_app = '\033[35m'
+                    color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
+                    print(run_msg)
+                    await update.message.reply_text(f"\U0001f4dd Saving note: {title[:100]}")
+                    try:
+                        result = note_save(title, content)
+                    except Exception as e:
+                        result = f"Error: {e}"
+
+            elif tool_name == 'read_notes':
+                title = tool_args.get('title', None)
+                run_msg = f"[{_req_counter}.-] app: RUNNING: read_notes({title or ''})"
+                logger.debug(run_msg)
+                c_app = '\033[35m'
+                color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
+                print(run_msg)
+                try:
+                    result = note_read(title)
+                except Exception as e:
+                    result = f"Error: {e}"
 
             elif tool_name == 'bash':
                 if not command:

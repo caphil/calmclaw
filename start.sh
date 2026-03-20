@@ -54,7 +54,7 @@ launch_win "chrome" "/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ C
 launch_win "bot" "cd $PROJECT_DIR && source .venv/bin/activate && python main.py"
 
 # Window 5: Memory
-launch_win "memory" "while clear && cat $CALMCLAW/MEMORY.md; do sleep 5; done"
+launch_win "memory" "while clear && cat $CALMCLAW/MEMORY.md 2>/dev/null || echo 'No memory'; do sleep 2; done"
 
 # Window 6: Reminders
 launch_win "reminders" "while clear && cat $CALMCLAW/REMINDERS.md 2>/dev/null || echo 'No reminders'; do sleep 2; done"
@@ -62,5 +62,8 @@ launch_win "reminders" "while clear && cat $CALMCLAW/REMINDERS.md 2>/dev/null ||
 # Window 7: Tasks
 launch_win "tasks" "while clear && cat $CALMCLAW/TASKS.md 2>/dev/null || echo 'No tasks'; do sleep 2; done"
 
+# Window 8: Notes
+launch_win "notes" "while clear && cat $CALMCLAW/NOTES.md 2>/dev/null || echo 'No notes'; do sleep 2; done"
+
 # Window 1: Log
-launch_win "log" "tail -n 200 -f $CALMCLAW/conversation_color.log"
+launch_win "log" "while true; do tail -n 200 -f $CALMCLAW/conversation_color.log 2>/dev/null || (clear && echo 'Waiting for log...'); sleep 2; done"

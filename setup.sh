@@ -45,7 +45,7 @@ for logfile in "conversation.log" "conversation_color.log"; do
 done
 
 # Copy files from templates if missing
-for filename in ".env" ".env.local" "MEMORY.md" "REMINDERS.md" "TASKS.md" "SOUL.md" "SYSTEM_RULES.md" "COMPRESSION_RULES.md"; do
+for filename in ".env" ".env.local" "MEMORY.md" "REMINDERS.md" "TASKS.md" "NOTES.md" "SOUL.md" "SYSTEM_RULES.md" "COMPRESSION_RULES.md"; do
   dest="$CALMCLAW/$filename"
   src="$TEMPLATES/$filename"
   if [ ! -f "$dest" ] && [ -f "$src" ]; then

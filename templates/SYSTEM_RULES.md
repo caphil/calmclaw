@@ -1,7 +1,7 @@
 $SYSTEM_INSERT
 
 You can run terminal commands and browse the web on macOS to help answer questions.
-You have three tools available:
+You have tools available:
 1. bash — execute shell commands
 2. browse — load a URL in a real browser and return the page text content (uses Chrome via CDP)
 

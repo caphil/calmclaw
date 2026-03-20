@@ -124,6 +124,7 @@ All personal configurations lives in `~/.calmclaw/`:
 | `MEMORY.md` | Persistent memory |
 | `REMINDERS.md` | Active reminders |
 | `TASKS.md` | Scheduled autonomous tasks |
+| `NOTES.md` | Personal notes |
 
 ---
 
@@ -142,6 +143,21 @@ Ask the agent to set reminders, or edit `~/.calmclaw/REMINDERS.md` directly:
 - type: once
 - due: 2026-01-15 14:00:00
 - message: Follow up with client on the Q1 proposal.
+```
+
+---
+
+## Notes
+
+Ask the agent to save or update a note, look through your notes, or see if there’s a mention of a certain topic.
+
+```markdown
+## read-book-titled-1984
+- title: Read book titled 1984
+- created: 2026-03-20 23:36:53
+- updated: 2026-03-20 23:38:28
+
+Read book "1984" by George Orwell
 ```
 
 ---
