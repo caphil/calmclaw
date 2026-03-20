@@ -190,11 +190,18 @@ Tasks run autonomously: the agent browses, runs commands, prepares reports and s
 | `/compress` | Manually trigger conversation compression |
 | `/throw <idx> [idx ...]` | Remove messages by index (index 0 protected) |
 | `/thrown <N>` | Remove the last N messages |
+| `/ram` | Show current RAM usage |
+| `/env` | Show current environment configuration |
+| `/quit` | Shut down the agent |
 | `/reminders` | List active reminders |
 | `/clearreminders` | Remove all reminders |
 | `/tasks` | List scheduled tasks |
 | `/cleartasks` | Remove all tasks |
-| `/ram` | Show current RAM usage |
-| `/env` | Show current environment configuration |
-| `/quit` | Shut down the agent |
+| `/notes` | List saved notes |
+| `/clearnotes` | Remove all notes |
+| `/memory` | Show persistent memory |
+| `/clearmemory` | Clear persistent memory |
+| `/soul` | Show agent personality |
+| `/clearsoul` | Clear agent personality |
+
 

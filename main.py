@@ -2084,6 +2084,80 @@ async def on_cleartasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("All tasks cleared.")
 
 
+async def on_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    if user_id not in ALLOWED_IDS:
+        return
+    log_command('/notes', update)
+    notes = load_notes()
+    if not notes:
+        await update.message.reply_text("No notes saved.")
+        return
+    lines = []
+    for n in notes:
+        preview = n.get('content', '')[:80].replace('\n', ' ')
+        lines.append(f"{n['title']}: {preview}")
+    await update.message.reply_text("Notes:\n" + "\n".join(lines))
+
+
+async def on_clearnotes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    if user_id not in ALLOWED_IDS:
+        return
+    log_command('/clearnotes', update)
+    if os.path.exists(NOTES_FILE):
+        os.remove(NOTES_FILE)
+    await update.message.reply_text("All notes cleared.")
+
+
+async def on_soul(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    if user_id not in ALLOWED_IDS:
+        return
+    log_command('/soul', update)
+    if not os.path.exists(SOUL_FILE):
+        await update.message.reply_text("SOUL.md not found.")
+        return
+    with open(SOUL_FILE, 'r', encoding='utf-8') as f:
+        content = f.read()
+    if not content.strip():
+        await update.message.reply_text("SOUL.md is empty.")
+        return
+    await update.message.reply_text(content[:4000])
+
+
+async def on_clearsoul(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    if user_id not in ALLOWED_IDS:
+        return
+    log_command('/clearsoul', update)
+    if os.path.exists(SOUL_FILE):
+        os.remove(SOUL_FILE)
+    await update.message.reply_text("SOUL.md cleared.")
+
+
+async def on_memory(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    if user_id not in ALLOWED_IDS:
+        return
+    log_command('/memory', update)
+    content = load_memory()
+    if not content.strip():
+        await update.message.reply_text("Memory is empty.")
+        return
+    await update.message.reply_text(content[:4000])
+
+
+async def on_clearmemory(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    if user_id not in ALLOWED_IDS:
+        return
+    log_command('/clearmemory', update)
+    if os.path.exists(MEMORY_FILE):
+        os.remove(MEMORY_FILE)
+    await update.message.reply_text("Memory cleared.")
+
+
 async def on_env(update: Update, _context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     if user_id not in ALLOWED_IDS:
@@ -2254,6 +2328,12 @@ def main():
     app.add_handler(CommandHandler("clearreminders", on_clearreminders))
     app.add_handler(CommandHandler("tasks", on_tasks))
     app.add_handler(CommandHandler("cleartasks", on_cleartasks))
+    app.add_handler(CommandHandler("notes", on_notes))
+    app.add_handler(CommandHandler("clearnotes", on_clearnotes))
+    app.add_handler(CommandHandler("memory", on_memory))
+    app.add_handler(CommandHandler("clearmemory", on_clearmemory))
+    app.add_handler(CommandHandler("soul", on_soul))
+    app.add_handler(CommandHandler("clearsoul", on_clearsoul))
     app.add_handler(CommandHandler("env", on_env))
     app.add_handler(CommandHandler("compress", on_compress))
     app.add_handler(CommandHandler("messages", on_messages))
