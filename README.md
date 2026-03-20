@@ -59,7 +59,12 @@ The current model uses OpenAI's **Harmony response format**, a native multi-chan
 
 ## Setup
 
-**1. Clone and install:**
+**1. Install uv** (if not already installed):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**2. Clone and install:**
 ```bash
 git clone https://github.com/caphil/calmclaw.git
 cd calmclaw
@@ -67,12 +72,12 @@ uv venv --python 3.14
 uv pip install -r requirements-lock.txt
 ```
 
-**2. Run setup** (creates `~/.calmclaw/` with config templates):
+**3. Run setup** (creates `~/.calmclaw/` with config templates):
 ```bash
 ./setup.sh
 ```
 
-**3. Configure credentials:**
+**4. Configure credentials:**
 
 Edit `~/.calmclaw/.env.local`:
 ```
@@ -86,7 +91,7 @@ MLX_MODEL_PATH=/path/to/your/model
 MLX_SERVER_MODULE=mlx_lm.server
 ```
 
-**4. Start everything:**
+**5. Start everything:**
 ```bash
 ./start.sh
 ```
