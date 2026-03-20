@@ -53,8 +53,8 @@ The current model uses OpenAI's **Harmony response format**, a native multi-chan
 ## Safety
 
 > [!WARNING]
-> Early-stage project. The agent has full terminal access, LLM outputs can be unpredictable. Review commands carefully. There are no safeguards in place. If you want real isolation, run this in a Docker container or VM.
-
+> - Early-stage project. The agent has full terminal access, LLM outputs can be unpredictable. Review commands carefully. There are no safeguards in place. If you want real isolation, run this in a Docker container or VM.
+> - Save your files before running CalmClaw.
 ---
 
 ## Setup
