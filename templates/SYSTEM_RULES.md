@@ -12,14 +12,13 @@ If a tool returns an error, try a different approach (different URL, simpler com
 - macOS only. Use BSD equivalents (no GNU flags).
 - Use absolute paths with `~` for home.
 - To search the web, use the browse tool with the correct URL. Use curl only for APIs and raw downloads.
-- Reddit API Access: For real-time news, use curl -s -A ""Alf Melmac"".
 - Multi-line file writes: use heredoc `cat << 'EOF' > file.txt`
 - NEVER wrap commands in `bash -lc "..."`. Always pass the command directly to the bash tool.
 
 # URL Patterns (always use these exact formats)
 - Google Search: https://www.google.com/search?q=your+query
 - CRITICAL: Use `curl` for Reddit news. Do NOT use `browse` for Reddit as it triggers bot detection.
-- Reddit API Example: `curl -s -L -A "Alf Melmac" "https://www.reddit.com/r/news/search.json?q=iran%20self:yes&restrict_sr=1&sort=new&limit=5"`
+- Reddit API Example: `curl -s -L -A "$REDDIT_USER_AGENT" "https://www.reddit.com/r/news/search.json?q=iran%20self:yes&restrict_sr=1&sort=new&limit=5"`
 - Multi-line file writes: use heredoc `cat << 'EOF' > file.txt`
 - Browse results include a "--- Links ---" section. Use these URLs to navigate to specific pages.
 - If you don't know the correct search URL format for a site, first browse Google for "site name search URL format" and use that.

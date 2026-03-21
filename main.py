@@ -45,6 +45,7 @@ MAX_TOKEN_OUTPUT_FROM_LLM     = int(os.getenv('MAX_TOKEN_OUTPUT_FROM_LLM',      
 MAX_TOKEN_COMPRESSION_SUMMARY = int(os.getenv('MAX_TOKEN_COMPRESSION_SUMMARY',  str(int(MAX_TOKEN_INPUT_TO_LLM * _summary_factor))))
 MAX_TOOL_RESULT_CHARS         = int(os.getenv('MAX_TOOL_RESULT_CHARS',          str(int(MAX_TOKEN_INPUT_TO_LLM * CHARS_PER_TOKEN * _tool_factor))))
 MAX_COMMAND_ITERATIONS         = int(os.getenv('MAX_COMMAND_ITERATIONS',      '100'))
+MAX_LINKS                      = int(os.getenv('MAX_LINKS',                   '15'))
 _summary_llm_factor        = float(os.getenv('SUMMARY_MAX_TOKEN_FACTOR', '0.8'))
 SUMMARY_MAX_TOKENS         = int(MAX_TOKEN_INPUT_TO_LLM * _summary_llm_factor)
 SUMMARY_REASONING_EFFORT   = os.getenv('SUMMARY_REASONING_EFFORT', 'medium')
@@ -387,50 +388,7 @@ async def _run_task(app, task):
                 return
 
             # Execute tool call
-            result = None
-            if tool_name == 'bash' and command:
-                try:
-                    result = execute_command(command)
-                except subprocess.TimeoutExpired:
-                    result = "Command timed out after 60 seconds."
-            elif tool_name == 'browse':
-                url = tool_args.get('url', '')
-                if url:
-                    try:
-                        result = await asyncio.get_event_loop().run_in_executor(None, browse_url, url)
-                    except Exception as e:
-                        result = f"Error: {e}"
-                else:
-                    result = "Error: no url provided"
-            elif tool_name == 'strip_tags':
-                file_path = tool_args.get('file_path', '')
-                if file_path:
-                    try:
-                        result = strip_tags_from_file(file_path)
-                    except Exception as e:
-                        result = f"Error: {e}"
-                else:
-                    result = "Error: no file_path provided"
-            elif tool_name == 'save_note':
-                title = tool_args.get('title', '')
-                content = tool_args.get('content', '')
-                if title:
-                    try:
-                        result = note_save(title, content)
-                    except Exception as e:
-                        result = f"Error: {e}"
-                else:
-                    result = "Error: no title provided"
-            elif tool_name == 'read_notes':
-                title = tool_args.get('title', None)
-                try:
-                    result = note_read(title)
-                except Exception as e:
-                    result = f"Error: {e}"
-            else:
-                available = ', '.join(t['function']['name'] for t in TOOLS)
-                result = f"Error: unknown tool '{tool_name}'. Available: {available}"
-
+            result = await call_tool(tool_name, tool_args, command)
             if result is None:
                 result = "Error: could not execute tool call."
 
@@ -578,6 +536,7 @@ def load_system_rules():
                 parts.append(f.read().strip())
     text = '\n\n'.join(parts)
     text = text.replace('$CALMCLAW_DIR', _CALMCLAW)
+    text = os.path.expandvars(text)
     if '$SYSTEM_INSERT' in text:
         insert = ''
         if os.path.exists(SYSTEM_INSERT_FILE):
@@ -589,6 +548,16 @@ def load_system_rules():
                 pass
         text = text.replace('$SYSTEM_INSERT', insert)
     return text
+
+TOOL_FEEDBACK = {
+    'bash':            lambda a, cmd: f"\u2699\ufe0f Running: {cmd[:300]}",
+    'browse':          lambda a, cmd: f"\U0001f310 Browsing: {a.get('url', '')[:300]}",
+    'strip_tags':      lambda a, cmd: f"\U0001f4c4 Stripping tags: {a.get('file_path', '')[:300]}",
+    'save_note':       lambda a, cmd: f"\U0001f4dd Saving note: {a.get('title', '')[:100]}",
+    'read_notes':      lambda a, cmd: f"\U0001f4d6 Reading notes",
+    'headless_browse': lambda a, cmd: f"\U0001f310 Headless browsing: {a.get('url', '')[:300]}",
+    'web_search':      lambda a, cmd: f"\U0001f50d Searching: {a.get('query', '')[:300]}",
+}
 
 TOOLS = [
     {
@@ -755,6 +724,67 @@ def load_state():
 
 
 
+async def call_tool(tool_name: str, tool_args: dict, command: str):
+    """Execute a tool and return its result. Returns None for malformed bash."""
+    if tool_name == 'bash':
+        if not command:
+            return None  # malformed — caller handles retry
+        try:
+            return execute_command(command)
+        except subprocess.TimeoutExpired:
+            return "Command timed out after 60 seconds."
+    elif tool_name == 'browse':
+        url = tool_args.get('url', '')
+        if not url:
+            return "Error: no url provided"
+        try:
+            return await asyncio.get_event_loop().run_in_executor(None, browse_url, url)
+        except Exception as e:
+            return f"Error: {e}"
+    elif tool_name == 'strip_tags':
+        file_path = tool_args.get('file_path', '')
+        if not file_path:
+            return "Error: no file_path provided"
+        try:
+            return strip_tags_from_file(file_path)
+        except Exception as e:
+            return f"Error: {e}"
+    elif tool_name == 'save_note':
+        title = tool_args.get('title', '')
+        content = tool_args.get('content', '')
+        if not title:
+            return "Error: no title provided"
+        try:
+            return note_save(title, content)
+        except Exception as e:
+            return f"Error: {e}"
+    elif tool_name == 'read_notes':
+        title = tool_args.get('title', None)
+        try:
+            return note_read(title)
+        except Exception as e:
+            return f"Error: {e}"
+    elif tool_name == 'headless_browse':
+        url = tool_args.get('url', '')
+        if not url:
+            return "Error: no url provided"
+        try:
+            return await asyncio.get_event_loop().run_in_executor(None, headless_browse_url, url)
+        except Exception as e:
+            return f"Error: {e}"
+    elif tool_name == 'web_search':
+        query = tool_args.get('query', '')
+        if not query:
+            return "Error: no query provided"
+        try:
+            return await asyncio.get_event_loop().run_in_executor(None, web_search, query)
+        except Exception as e:
+            return f"Error: {e}"
+    else:
+        available = ', '.join(t['function']['name'] for t in TOOLS)
+        return f"Error: unknown tool '{tool_name}'. Available: {available}"
+
+
 def execute_command(command):
     result = subprocess.run(
         ['/bin/zsh', '-c', command], capture_output=True, timeout=60
@@ -801,7 +831,7 @@ SKIP_DOMAINS = {
     'maps.google.com', 'mail.google.com', 'play.google.com',
     'myaccount.google.com', 'consent.google.com',
 }
-MAX_LINKS = 15
+
 
 
 def dedup_links(links):
@@ -1783,129 +1813,30 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             color_logger.debug(internal_header)
             print(internal_header)
 
-            if tool_name == 'strip_tags':
-                file_path = tool_args.get('file_path', '')
-                if not file_path:
-                    result = "Error: no file_path provided"
-                else:
-                    run_msg = f"[{_req_counter}.-] app: RUNNING: strip_tags({file_path})"
-                    logger.debug(run_msg)
-                    c_app = '\033[35m'
-                    color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
-                    print(run_msg)
-                    await update.message.reply_text(f"\U0001f4c4 Stripping tags: {file_path[:300]}")
-                    try:
-                        result = strip_tags_from_file(file_path)
-                    except Exception as e:
-                        result = f"Error: {e}"
+            # Log + Telegram feedback
+            run_msg = f"[{_req_counter}.-] app: RUNNING: {tool_name}({command if tool_name == 'bash' else '...'})"
+            logger.debug(run_msg)
+            color_logger.debug("%s%s%s", '\033[35m', run_msg, RESET_COLOR)
+            print(run_msg)
+            feedback_fn = TOOL_FEEDBACK.get(tool_name)
+            if feedback_fn:
+                await update.message.reply_text(feedback_fn(tool_args, command))
 
-            elif tool_name == 'browse':
-                url = tool_args.get('url', '')
-                if not url:
-                    result = "Error: no url provided"
-                else:
-                    run_msg = f"[{_req_counter}.-] app: RUNNING: browse({url})"
-                    logger.debug(run_msg)
-                    c_app = '\033[35m'
-                    color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
-                    print(run_msg)
-                    await update.message.reply_text(f"\U0001f310 Browsing: {url[:300]}")
-                    try:
-                        result = await asyncio.get_event_loop().run_in_executor(None, browse_url, url)
-                    except Exception as e:
-                        result = f"Error: {e}"
+            result = await call_tool(tool_name, tool_args, command)
 
-            elif tool_name == 'headless_browse':
-                url = tool_args.get('url', '')
-                if not url:
-                    result = "Error: no url provided"
-                else:
-                    run_msg = f"[{_req_counter}.-] app: RUNNING: headless_browse({url})"
-                    logger.debug(run_msg)
-                    c_app = '\033[35m'
-                    color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
-                    print(run_msg)
-                    await update.message.reply_text(f"\U0001f310 Headless browsing: {url[:300]}")
-                    try:
-                        result = await asyncio.get_event_loop().run_in_executor(None, headless_browse_url, url)
-                    except Exception as e:
-                        result = f"Error: {e}"
+            if result is None:
+                # Malformed bash — command extraction failed
+                warn = f"[{_req_counter}.-] MALFORMED TOOL CALL — retrying"
+                print(warn)
+                logger.debug(warn)
+                await update.message.reply_text(warn)
+                messages.append({'role': 'tool', 'content': 'Error: could not parse your tool call. Please try again with valid JSON.'})
+                history.append({'req': uc['req'], 'msg': uc['msg'], 'role': 'tool', 'content': 'Error: malformed tool call'})
+                uc['msg'] += 1
+                save_state()
+                continue
 
-            elif tool_name == 'web_search':
-                query = tool_args.get('query', '')
-                if not query:
-                    result = "Error: no query provided"
-                else:
-                    run_msg = f"[{_req_counter}.-] app: RUNNING: web_search({query})"
-                    logger.debug(run_msg)
-                    c_app = '\033[35m'
-                    color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
-                    print(run_msg)
-                    await update.message.reply_text(f"\U0001f50d Searching: {query[:300]}")
-                    try:
-                        result = await asyncio.get_event_loop().run_in_executor(None, web_search, query)
-                    except Exception as e:
-                        result = f"Error: {e}"
-
-            elif tool_name == 'save_note':
-                title = tool_args.get('title', '')
-                content = tool_args.get('content', '')
-                if not title:
-                    result = "Error: no title provided"
-                else:
-                    run_msg = f"[{_req_counter}.-] app: RUNNING: save_note({title})"
-                    logger.debug(run_msg)
-                    c_app = '\033[35m'
-                    color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
-                    print(run_msg)
-                    await update.message.reply_text(f"\U0001f4dd Saving note: {title[:100]}")
-                    try:
-                        result = note_save(title, content)
-                    except Exception as e:
-                        result = f"Error: {e}"
-
-            elif tool_name == 'read_notes':
-                title = tool_args.get('title', None)
-                run_msg = f"[{_req_counter}.-] app: RUNNING: read_notes({title or ''})"
-                logger.debug(run_msg)
-                c_app = '\033[35m'
-                color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
-                print(run_msg)
-                try:
-                    result = note_read(title)
-                except Exception as e:
-                    result = f"Error: {e}"
-
-            elif tool_name == 'bash':
-                if not command:
-                    # Tool call detected but command extraction failed
-                    warn = f"[{_req_counter}.-] MALFORMED TOOL CALL — retrying"
-                    print(warn)
-                    logger.debug(warn)
-                    await update.message.reply_text(warn)
-                    messages.append({'role': 'tool', 'content': 'Error: could not parse your tool call. Please try again with valid JSON.'})
-                    history.append({'req': uc['req'], 'msg': uc['msg'], 'role': 'tool', 'content': 'Error: malformed tool call'})
-                    uc['msg'] += 1
-                    save_state()
-                    continue
-
-
-                run_msg = f"[{_req_counter}.-] app: RUNNING: {command}"
-                logger.debug(run_msg)
-                c_app = '\033[35m'
-                color_logger.debug("%s%s%s", c_app, run_msg, RESET_COLOR)
-                print(run_msg)
-                await update.message.reply_text(f"\u2699\ufe0f Running: {command[:300]}")
-
-                try:
-                    result = execute_command(command)
-                except subprocess.TimeoutExpired:
-                    result = "Command timed out after 60 seconds."
-
-            else:
-                # Unknown tool — likely a hallucinated name. Feed back available tools and retry.
-                available = ', '.join(t['function']['name'] for t in TOOLS)
-                result = f"Error: unknown tool '{tool_name}'. Available tools: {available}. Please retry with a valid tool name."
+            if result.startswith("Error: unknown tool"):
                 warn = f"[{_req_counter}.-] UNKNOWN TOOL '{tool_name}' — retrying"
                 print(warn)
                 logger.debug(warn)
