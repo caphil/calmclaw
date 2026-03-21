@@ -1,6 +1,13 @@
 # CalmClaw
 
-<img src="assets/calmclaw.jpg" width="500"/>
+<p align="center">
+    <img src="assets/calmclaw.jpg" width="500"/>
+    <br>
+    <img src="https://img.shields.io/badge/Model-GPT--OSS--xB-black" />
+    <img src="https://img.shields.io/badge/Interface-Telegram-blue" />
+    <img src="https://img.shields.io/badge/Platform-macOS-silver" />
+    <img src="https://img.shields.io/github/license/caphil/calmclaw?color=blue" />
+</p>
 
 CalmClaw is a local-first AI agent built specifically to work with LLMs on consumer hardware. By removing cloud dependencies and subscriptions, it reduces long-term costs and ensures your data never leaves your device. This project is a hands-on way to develop local agentic workflows while managing the specific limits of memory, context windows, and the slower speeds of on-device processing.
 
@@ -10,12 +17,13 @@ Local models aren't as fast or capable as cloud-based models yet, so CalmClaw is
 
 ## What it does
 
-- **Chat**: Talk to your agent via Telegram
-- **Web browsing**: The agent can browse the web using your local Chrome via CDP
-- **Scheduled tasks**: Run autonomous LLM tasks on a schedule (e.g., daily news briefing, weekly report)
-- **Reminders**: Schedule one-time or recurring reminders sent directly to you via Telegram
-- **Persistent memory**: The agent remembers context and your preferences
-- **Terminal commands**: The agent can run shell commands on your Mac
+- **Chat**: Talks to you via Telegram
+- **Web browsing**: Browses the web using your local Chrome via CDP
+- **Terminal commands**: Runs shell commands on your Mac
+- **Scheduled tasks**: Runs autonomous LLM tasks on a schedule (e.g., daily news briefing, weekly report)
+- **Reminders**: Sends you one-time or recurring reminders
+- **Smart notes**: Stores and summarizes your daily thoughts
+- **Persistent memory**: Remembers context and honors your personal preferences
 
 ---
 
@@ -59,25 +67,14 @@ The current model uses OpenAI's **Harmony response format**, a native multi-chan
 
 ## Setup
 
-**1. Install uv** (if not already installed):
+**1. Install:**
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+curl -LsSf https://raw.githubusercontent.com/caphil/calmclaw/main/install.sh | bash
 ```
 
-**2. Clone and install:**
-```bash
-git clone https://github.com/caphil/calmclaw.git
-cd calmclaw
-uv venv --python 3.14
-uv pip install -r requirements-lock.txt
-```
+Clones the repo into `~/Documents/calmclaw`, creates a venv, installs dependencies, and bootstraps `~/.calmclaw/`. To use a different location: `INSTALL_DIR=~/mypath curl ... | bash`
 
-**3. Run setup** (creates `~/.calmclaw/` with config templates):
-```bash
-./setup.sh
-```
-
-**4. Configure credentials:**
+**2. Configure credentials:**
 
 Edit `~/.calmclaw/.env.local`:
 ```
@@ -91,9 +88,9 @@ MLX_MODEL_PATH=/path/to/your/model
 MLX_SERVER_MODULE=mlx_lm.server
 ```
 
-**5. Start everything:**
+**3. Start everything:**
 ```bash
-./start.sh
+~/Documents/calmclaw/start.sh
 ```
 
 This opens Terminal windows for: the MLX server, Chrome (with remote debugging), the agent, memory viewer, reminders viewer, tasks viewer, and the live conversation log.
@@ -101,6 +98,13 @@ This opens Terminal windows for: the MLX server, Chrome (with remote debugging),
 Happy chatting 😊
 
 > **Note**: After testing, you may want to modify the environmental parameters to get the best performance on your hardware.
+
+**4. Update:**
+```bash
+~/Documents/calmclaw/update.sh
+```
+
+Pulls the latest code, refreshes dependencies, and picks up any new config templates.
 
 ---
 
