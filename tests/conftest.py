@@ -1,6 +1,19 @@
 import pytest
 
 
+def pytest_addoption(parser):
+    parser.addoption('--run-evals', action='store_true', default=False,
+                     help='Run LLM evals (requires a running MLX server)')
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption('--run-evals'):
+        skip = pytest.mark.skip(reason='pass --run-evals to run (requires MLX server)')
+        for item in items:
+            if 'evals' in str(item.fspath):
+                item.add_marker(skip)
+
+
 @pytest.fixture
 def tmp_calmclaw(tmp_path, monkeypatch):
     """Redirect all file I/O to a temp directory and patch file path constants."""
