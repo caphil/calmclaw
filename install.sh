@@ -53,6 +53,8 @@ echo -e "  ${GREEN}[OK]${RESET}      uv found"
 if [ -d "$INSTALL_DIR" ]; then
   echo -e "  ${RED}[ERROR]${RESET} Directory already exists: $INSTALL_DIR"
   echo "  Remove it or set a different location: INSTALL_DIR=~/mypath curl ... | bash"
+  echo "  "
+  echo "  Updates can be installed using update.command or update.sh in your installation directory on your computer."
   exit 1
 fi
 echo -e "  ${CYAN}[CLONE]${RESET}   Cloning into $INSTALL_DIR..."
