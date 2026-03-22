@@ -23,10 +23,10 @@ echo -e "${CYAN}  CalmClaw Installer${RESET}"
 echo -e "${CYAN}===============================${RESET}"
 echo ""
 
-# Check ~/.zshrc
+# Ensure ~/.zshrc exists
 if [[ ! -f "$ZSHRC" ]]; then
-  echo -e "  ${RED}[ERROR]${RESET} ~/.zshrc not found. Please create it before installing."
-  exit 1
+  touch "$ZSHRC"
+  echo -e "  ${GREEN}[OK]${RESET}      Created ~/.zshrc"
 fi
 
 # Check git
