@@ -7,7 +7,9 @@
 set -e
 
 REPO_URL="https://github.com/caphil/calmclaw.git"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/Documents/calmclaw}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/Applications/CalmClaw}"
+CALMCLAW_DIR="${CALMCLAW_DIR:-$HOME/.calmclaw}"
+ZSHRC="$HOME/.zshrc"
 
 GREEN='\033[0;32m'
 LGREEN='\033[1;32m'
@@ -20,6 +22,12 @@ echo -e "${CYAN}===============================${RESET}"
 echo -e "${CYAN}  CalmClaw Installer${RESET}"
 echo -e "${CYAN}===============================${RESET}"
 echo ""
+
+# Check ~/.zshrc
+if [[ ! -f "$ZSHRC" ]]; then
+  echo -e "  ${RED}[ERROR]${RESET} ~/.zshrc not found. Please create it before installing."
+  exit 1
+fi
 
 # Check git
 if ! command -v git &>/dev/null; then
@@ -58,28 +66,7 @@ uv venv --python 3.14
 uv pip install -r requirements-lock.txt
 echo -e "  ${LGREEN}[DONE]${RESET}    Dependencies installed"
 
-# Bootstrap ~/.calmclaw
+# Bootstrap and configure
 echo ""
-"$INSTALL_DIR/setup.sh"
-
-echo ""
-echo -e "${CYAN}===============================${RESET}"
-echo -e "${CYAN}  Installation complete!${RESET}"
-echo ""
-echo "  Project: $INSTALL_DIR"
-echo ""
-echo "  Next steps:"
-echo ""
-echo "  1. Set your model path in ~/.calmclaw/.env:"
-echo "       MLX_MODEL_PATH=/path/to/your/model"
-echo ""
-echo "  2. Add your Telegram credentials in ~/.calmclaw/.env.local:"
-echo "       TELEGRAM_BOT_TOKEN=your-token"
-echo "       ALLOWED_TELEGRAM_ID=your-id"
-echo ""
-echo "  3. Start CalmClaw:"
-echo "       $INSTALL_DIR/start.sh"
-echo "     or open start.command
-echo ""
-echo -e "${CYAN}===============================${RESET}"
-echo ""
+export CALMCLAW_DIR
+"$INSTALL_DIR/setup.sh" "$@"
