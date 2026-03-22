@@ -20,7 +20,8 @@ echo ""
 
 # Pull latest code
 echo -e "  ${CYAN}[GIT]${RESET}     Pulling latest changes..."
-git -C "$PROJECT_DIR" pull
+git -C "$PROJECT_DIR" fetch origin main
+git -C "$PROJECT_DIR" reset --hard origin/main
 echo -e "  ${LGREEN}[DONE]${RESET}    Code updated"
 
 # Refresh dependencies

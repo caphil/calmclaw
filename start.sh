@@ -4,10 +4,15 @@
 
 # Derive project directory from script location
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CALMCLAW="${CALMCLAW_DIR:-$HOME/.calmclaw}"
 
-# Bootstrap ~/.calmclaw and example files
-"$PROJECT_DIR/setup.sh"
+if [[ -z "$CALMCLAW_DIR" ]]; then
+  printf '\033[0;31mError: Cannot start CalmClaw!\033[0m\n' >&2
+  printf '\033[0;31m       CALMCLAW_DIR is not set in ~/.zshrc.\033[0m\n' >&2
+  printf '\n' >&2
+  printf '\033[1;31m       Open setup.command to configure.\033[0m\n' >&2
+  exit 1
+fi
+CALMCLAW="$CALMCLAW_DIR"
 
 # Load config from ~/.calmclaw/.env
 if [ -f "$CALMCLAW/.env" ]; then

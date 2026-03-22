@@ -77,7 +77,7 @@ Before running, have ready:
 - Your Telegram user ID — [get it via @userinfobot](https://t.me/userinfobot)
 - A downloaded OpenAI GPT OSS model
 
-If you later need to change your Telegram credentials or the CalmClaw configuration → Open `setup.command` in `~/Applications/CalmClaw`. CalmClaw can be updated by opening `update.command` in `~/Applications/CalmClaw`.
+If you later need to change your Telegram credentials, reconfigure or update CalmClaw → Open `setup.command` or `update.command` in `~/Applications/CalmClaw`.
 
 ---
 
@@ -192,7 +192,7 @@ Tasks run autonomously: the agent browses, runs commands, prepares reports and s
 **Install**
 ```bash
 INSTALL_DIR=~/Applications/CalmClaw CALMCLAW_DIR=~/.calmclaw curl -LsSf https://raw.githubusercontent.com/caphil/calmclaw/main/install.sh | bash                # interactive
-INSTALL_DIR=~/Applications/CalmClaw CALMCLAW_DIR=~/.calmclaw curl -LsSf https://raw.githubusercontent.com/caphil/calmclaw/main/install.sh | bash -s -- --silent # silent
+INSTALL_DIR=~/Applications/CalmClaw CALMCLAW_DIR=~/.calmclaw curl -LsSf https://raw.githubusercontent.com/caphil/calmclaw/main/install.sh | bash -s -- --non-interactive # non-interactive
 ```
 
 - `CALMCLAW_DIR` is optional. If `CALMCLAW_DIR` is given, it is passed through to `setup.sh`.
@@ -208,7 +208,7 @@ CalmClaw can be updated based on this repository as follows. Calls the guided se
 
 ```bash
 CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/update.sh          # interactive
-CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/update.sh --silent # silent
+CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/update.sh --non-interactive # non-interactive
 ```
 
 - `CALMCLAW_DIR` is optional. If `CALMCLAW_DIR` is given, it is passed through to `setup.sh`.
@@ -219,11 +219,11 @@ CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/update.sh --silent # silent
 
 ```bash
 CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/setup.sh          # interactive
-CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/setup.sh --silent # silent
+CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/setup.sh --non-interactive # non-interactive
 ```
 
 - `CALMCLAW_DIR` is optional.
-- In silent mode (`--silent`), uses resolved values without prompting.
+- In non-interactive mode (`--non-interactive`), uses resolved values without prompting.
 - Resolves `CALMCLAW_DIR` in order: inline env → `~/.zshrc` → default (`~/.calmclaw`).
 - Bootstraps the agent workspace from `/templates` (create if not exists, no overwrite).
 - Writes `CALMCLAW_DIR` to `~/.zshrc` for persistence across terminals (created if missing).
