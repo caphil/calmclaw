@@ -3,7 +3,7 @@
 <p align="center">
     <img src="assets/calmclaw.jpg" width="500"/>
     <br>
-    <img src="https://img.shields.io/badge/Model-GPT--OSS--xB-black" />
+    <img src="https://img.shields.io/badge/Model-OpenAI%20GPT%20OSS-black" />
     <img src="https://img.shields.io/badge/Interface-Telegram-blue" />
     <img src="https://img.shields.io/badge/Platform-macOS-silver" />
     <img src="https://img.shields.io/github/license/caphil/calmclaw?color=blue" />
@@ -20,9 +20,8 @@ Local models aren't as fast or capable as cloud-based models yet, so CalmClaw is
 - **Chat**: Talks to you via Telegram
 - **Web browsing**: Browses the web using your local Chrome via CDP
 - **Terminal commands**: Runs shell commands on your Mac
-- **Scheduled tasks**: Runs autonomous LLM tasks on a schedule (e.g., daily news briefing, weekly report)
+- **Scheduled tasks**: Runs autonomous LLM tasks on a schedule (e.g., daily news briefing, executing external scripts)
 - **Reminders**: Sends you one-time or recurring reminders
-- **Smart notes**: Stores and summarizes your daily thoughts
 - **Persistent memory**: Remembers context and honors your personal preferences
 
 ---
@@ -41,7 +40,7 @@ Local models have small context windows and slow inference; CalmClaw addresses t
 CalmClaw has been developed and tested on:
 
 - **Hardware**: MacBook Pro M1 Pro, 16 GB RAM, running macOS Tahoe
-- **Model**: [gpt-oss-safeguard-20b-MLX-MXFP4](https://huggingface.co/lmstudio-community/gpt-oss-safeguard-20b-MLX-MXFP4) (4-bit quantized, ~10 GB)
+- **Model**: OpenAI [gpt-oss-safeguard-20b-MLX-MXFP4](https://huggingface.co/lmstudio-community/gpt-oss-safeguard-20b-MLX-MXFP4) (4-bit quantized, ~10 GB)
 
 The current model uses OpenAI's **Harmony response format**, a native multi-channel tool-call protocol with special tokens (`<|channel|>`, `<|message|>`, `to=functions.*`). The parser in `main.py` is built specifically around this format. Other MLX-compatible models may work with adjustments to `ENDPOINT_SUFFIX` and `MLX_SERVER_MODULE` in your `.env`, but will require parser changes for their tool-call format.
 
@@ -53,7 +52,7 @@ The current model uses OpenAI's **Harmony response format**, a native multi-chan
 - Python 3.14+
 - A Telegram bot token ([create one via @BotFather](https://t.me/BotFather))
 - Your Telegram user ID ([get it via @userinfobot](https://t.me/userinfobot))
-- The gpt-oss-safeguard-20b-MLX-MXFP4 model (or another MLX-compatible model using OpenAI's **Harmony response format**)
+- An OpenAI GPT OSS model (or another MLX-compatible model using OpenAI's **Harmony response format**)
 - Google Chrome (for web browsing via CDP)
 
 ---
@@ -65,59 +64,33 @@ The current model uses OpenAI's **Harmony response format**, a native multi-chan
 > - Save your files before running CalmClaw.
 ---
 
-## Setup
+## Quick start
 
-**1. Install:**
 ```bash
 curl -LsSf https://raw.githubusercontent.com/caphil/calmclaw/main/install.sh | bash
 ```
 
-Clones the repo into `~/Documents/calmclaw`, creates a venv, installs dependencies, and bootstraps `~/.calmclaw/`. To use a different location: `INSTALL_DIR=~/mypath curl ... | bash`
+Download and run the installer script. The script installs everything needed, runs the guided setup wizard, and starts CalmClaw.
 
-**2. Configure credentials:**
+Before running, have ready:
+- A Telegram bot token — [create one via @BotFather](https://t.me/BotFather)
+- Your Telegram user ID — [get it via @userinfobot](https://t.me/userinfobot)
+- A downloaded OpenAI GPT OSS model
 
-Edit `~/.calmclaw/.env.local`:
-```
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here
-ALLOWED_TELEGRAM_ID=your-telegram-id-here
-```
-
-Edit `~/.calmclaw/.env` and set your model path:
-```
-MLX_MODEL_PATH=/path/to/your/model
-MLX_SERVER_MODULE=mlx_lm.server
-```
-
-**3. Start everything:**
-```bash
-~/Documents/calmclaw/start.sh
-```
-
-This opens Terminal windows for: the MLX server, Chrome (with remote debugging), the agent, memory viewer, reminders viewer, tasks viewer, and the live conversation log.
-
-Happy chatting 😊
-
-> **Note**: After testing, you may want to modify the environmental parameters to get the best performance on your hardware.
-
-**4. Update:**
-```bash
-~/Documents/calmclaw/update.sh
-```
-
-Pulls the latest code, refreshes dependencies, and picks up any new config templates.
+If you later need to change your Telegram credentials or the CalmClaw configuration → Open `setup.command` in `~/Applications/CalmClaw`. CalmClaw can be updated by opening `update.command` in `~/Applications/CalmClaw`.
 
 ---
 
 ## Current scope
 
-- CalmClaw currently runs as a single agent instance. Multi-agent coordination is not yet supported.
+- CalmClaw currently runs as a single agent instance.
 - CalmClaw refrains from using a secondary lightweight model for compression. DeepSeek-R1-Distill-Qwen-1.5B was tested but could not produce summaries accurate enough for reliable compression; therefore, the primary model handles this task.
 
 ---
 
 ## Configuration
 
-All personal configurations lives in `~/.calmclaw/`:
+All personal data lives in the agent workspace (`~/.calmclaw/` by default):
 
 | File | Purpose |
 |------|---------|
@@ -208,4 +181,50 @@ Tasks run autonomously: the agent browses, runs commands, prepares reports and s
 | `/soul` | Show agent personality |
 | `/clearsoul` | Clear agent personality |
 
+## Advanced users
 
+`install.sh` installs `uv` if it is not already present, downloads this repository, sets up a Python environment, then runs the guided setup wizard `setup.sh` to create the agent workspace, configure CalmClaw, and set Telegram credentials.
+
+- `CALMCLAW_DIR` sets where the agent workspace is bootstrapped based on `/templates` (create if not exists, no overwrite).
+- `INSTALL_DIR` sets where the code is cloned.
+
+
+**Install**
+```bash
+INSTALL_DIR=~/Applications/CalmClaw CALMCLAW_DIR=~/.calmclaw curl -LsSf https://raw.githubusercontent.com/caphil/calmclaw/main/install.sh | bash                # interactive
+INSTALL_DIR=~/Applications/CalmClaw CALMCLAW_DIR=~/.calmclaw curl -LsSf https://raw.githubusercontent.com/caphil/calmclaw/main/install.sh | bash -s -- --silent # silent
+```
+
+- `CALMCLAW_DIR` is optional. If `CALMCLAW_DIR` is given, it is passed through to `setup.sh`.
+- After a silent install, set your Telegram credentials manually in `<CALMCLAW_DIR>/.env.local` and consider updating the configuration in `<CALMCLAW_DIR>/.env`:
+```
+TELEGRAM_BOT_TOKEN=your-token
+ALLOWED_TELEGRAM_ID=your-id
+```
+
+**Update**
+
+CalmClaw can be updated based on this repository as follows. Calls the guided setup wizard `setup.sh` when done.
+
+```bash
+CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/update.sh          # interactive
+CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/update.sh --silent # silent
+```
+
+- `CALMCLAW_DIR` is optional. If `CALMCLAW_DIR` is given, it is passed through to `setup.sh`.
+
+**Setup**
+
+`setup.sh` is the configuration wizard. It can be run directly to reconfigure at any time, and is also called by `install.sh` and `update.sh`.
+
+```bash
+CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/setup.sh          # interactive
+CALMCLAW_DIR=~/.calmclaw ~/Applications/CalmClaw/setup.sh --silent # silent
+```
+
+- `CALMCLAW_DIR` is optional.
+- In silent mode (`--silent`), uses resolved values without prompting.
+- Resolves `CALMCLAW_DIR` in order: inline env → `~/.zshrc` → default (`~/.calmclaw`).
+- Bootstraps the agent workspace from `/templates` (create if not exists, no overwrite).
+- Writes `CALMCLAW_DIR` to `~/.zshrc` for persistence across terminals (created if missing).
+- In interactive mode, walks through agent workspace, token limit, and Telegram credentials.

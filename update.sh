@@ -30,9 +30,5 @@ echo -e "  ${CYAN}[INSTALL]${RESET} Refreshing dependencies..."
 echo -e "  ${LGREEN}[DONE]${RESET}    Dependencies refreshed"
 
 # Run setup to pick up any new template files
-"$PROJECT_DIR/setup.sh"
-
-echo -e "${CYAN}===============================${RESET}"
-echo -e "${CYAN}  Update complete!${RESET}"
-echo -e "${CYAN}===============================${RESET}"
-echo ""
+export CALMCLAW_DIR
+"$PROJECT_DIR/setup.sh" "$@"
